@@ -33,54 +33,108 @@ O próximo passo é voltar ao diretório do kernel e configurar o build:
 
 ```bash
 # Gere o arquivo .config
-make defconfig
+make ARCH=arm64 k6877v1_64_defconfig
+```
+> ATENÇÃO: Eu usei a config `k6877v1_64_defconfig` pois ELA é compatível com o MEU chip Mediatek. Pesquise sobre qual é compativel com o seu e mude o nome para configurar.
 
+Configurar o build:
+```bash
 # Habilitar e desabilitar features
 scripts/config \
---enable CONFIG_KEXEC \                    # Permite carregar outro kernel via kexec syscall
---enable CONFIG_KEXEC_FILE \               # Variante mais segura do kexec (usada no Android moderno)
---enable CONFIG_KEXEC_CORE \               # Infraestrutura base do kexec no kernel
---enable CONFIG_CRASH_DUMP \               # Necessário para memória de dump e alguns fluxos kexec
---enable CONFIG_RELOCATABLE \              # Permite kernel rodar em endereços diferentes (essencial pro kexec)
---enable CONFIG_RANDOMIZE_BASE \           # KASLR — geralmente exigido junto com relocatable
---enable CONFIG_ARM64_CRASH_DUMP \         # Suporte crash dump específico ARM64
---enable CONFIG_PHYS_ADDR_T_64BIT \        # Endereçamento físico 64-bit (Android ARM64 moderno)
---enable CONFIG_ATAGS \                    # Compatibilidade legacy boot params (às vezes ajuda em kexec Android)
---disable CONFIG_SECURITY \                # Remove LSM framework (SELinux/AppArmor etc.)
---disable CONFIG_SECURITY_SELINUX \        # Desativa SELinux completamente
---disable CONFIG_SECURITY_SELINUX_BOOTPARAM \ # Remove override SELinux via boot param
---disable CONFIG_DM_VERITY \               # Remove dm-verity (integridade forçada de system/vendor)
---disable CONFIG_DM_ANDROID_VERITY \       # Versão Android do verity
---disable CONFIG_FS_VERITY \               # Verificação criptográfica por filesystem
---disable CONFIG_SECURITYFS \              # FS usado por módulos de segurança
---enable CONFIG_BLK_DEV_INITRD \           # Permite usar ramdisk/initrd (boot.img Android)
---enable CONFIG_RD_GZIP \                  # Suporte ramdisk gzip
---enable CONFIG_RD_LZ4 \                   # Suporte ramdisk LZ4 (muito comum Android)
---enable CONFIG_RD_XZ \                    # Suporte ramdisk XZ
---enable CONFIG_DEVTMPFS \                 # Criação automática de /dev pelo kernel
---enable CONFIG_DEVTMPFS_MOUNT \           # Monta /dev automaticamente no boot
---enable CONFIG_EXT4_FS \                  # Filesystem EXT4 (system/vendor Android)
---enable CONFIG_F2FS_FS \                  # Filesystem flash-friendly comum em Android
---enable CONFIG_VFAT_FS \                  # FAT/VFAT (partições misc/boot/media)
---enable CONFIG_TMPFS \                    # FS temporário RAM (usado pelo Android init)
---enable CONFIG_OVERLAY_FS \               # OverlayFS (muito usado em mods/root/ROMs)
---enable CONFIG_PRINTK \                   # Logs kernel (dmesg)
---enable CONFIG_EARLY_PRINTK \             # Logs early boot — crucial debug kexec
---enable CONFIG_DEBUG_KERNEL \             # Ativa opções gerais debug kernel
---enable CONFIG_DEBUG_INFO \               # Inclui símbolos debug
---enable CONFIG_MAGIC_SYSRQ \              # SysRq debug (reinício forçado etc.)
---enable CONFIG_SYSVIPC \                  # IPC System V (Android userspace usa)
---enable CONFIG_POSIX_MQUEUE \             # Filas POSIX — libs Android dependem
---enable CONFIG_CGROUPS \                  # Control groups (Android init usa pesado)
---enable CONFIG_NAMESPACES \               # Namespaces estilo container
---enable CONFIG_MEMCG \                    # Memory control groups Android LMKD etc.
---enable CONFIG_BLK_DEV_LOOP \             # Loop devices (montar imagens ROM)
---enable CONFIG_DM_MAPPER \                # Device mapper (base crypt/fs virtual)
---enable CONFIG_DM_CRYPT \                 # Criptografia storage Android
---enable CONFIG_BINFMT_MISC \              # Executar binários não nativos (scripts/init mods)
---disable CONFIG_MTK_SEC_VIDEO_PATH_SUPPORT \ # Remove restrição TrustZone vídeo MTK (se existir)
---disable CONFIG_MTK_IN_HOUSE_TEE_SUPPORT     # Remove hooks TEE MediaTek (às vezes bloqueia mods)
+--enable CONFIG_KEXEC \
+--enable CONFIG_KEXEC_FILE \
+--enable CONFIG_KEXEC_CORE \
+--enable CONFIG_CRASH_DUMP \
+--enable CONFIG_RELOCATABLE \
+--enable CONFIG_RANDOMIZE_BASE \
+--enable CONFIG_ARM64_CRASH_DUMP \
+--enable CONFIG_PHYS_ADDR_T_64BIT \
+--enable CONFIG_ATAGS \
+--disable CONFIG_SECURITY \
+--disable CONFIG_SECURITY_SELINUX \
+--disable CONFIG_SECURITY_SELINUX_BOOTPARAM \
+--disable CONFIG_DM_VERITY \
+--disable CONFIG_DM_ANDROID_VERITY \
+--disable CONFIG_FS_VERITY \
+--disable CONFIG_SECURITYFS \
+--enable CONFIG_BLK_DEV_INITRD \
+--enable CONFIG_RD_GZIP \
+--enable CONFIG_RD_LZ4 \
+--enable CONFIG_RD_XZ \
+--enable CONFIG_DEVTMPFS \
+--enable CONFIG_DEVTMPFS_MOUNT \
+--enable CONFIG_EXT4_FS \
+--enable CONFIG_F2FS_FS \
+--enable CONFIG_VFAT_FS \
+--enable CONFIG_TMPFS \
+--enable CONFIG_OVERLAY_FS \
+--enable CONFIG_PRINTK \
+--enable CONFIG_EARLY_PRINTK \
+--enable CONFIG_DEBUG_KERNEL \
+--enable CONFIG_DEBUG_INFO \
+--enable CONFIG_MAGIC_SYSRQ \
+--enable CONFIG_SYSVIPC \
+--enable CONFIG_POSIX_MQUEUE \
+--enable CONFIG_CGROUPS \
+--enable CONFIG_NAMESPACES \
+--enable CONFIG_MEMCG \
+--enable CONFIG_BLK_DEV_LOOP \
+--enable CONFIG_DM_MAPPER \
+--enable CONFIG_DM_CRYPT \
+--enable CONFIG_BINFMT_MISC \
+--disable CONFIG_MTK_SEC_VIDEO_PATH_SUPPORT \
+--disable CONFIG_MTK_IN_HOUSE_TEE_SUPPORT
+```
+Sobre o que essas configs fazem:
 
+| Config                            | Estado     | O que faz                                                             |
+| --------------------------------- | ---------- | --------------------------------------------------------------------- |
+| CONFIG_KEXEC                      | ✅ Enabled  | Permite carregar outro kernel diretamente via syscall `kexec`.        |
+| CONFIG_KEXEC_FILE                 | ✅ Enabled  | Variante moderna do kexec usando arquivos kernel assinados.           |
+| CONFIG_KEXEC_CORE                 | ✅ Enabled  | Infraestrutura interna necessária para kexec funcionar.               |
+| CONFIG_CRASH_DUMP                 | ✅ Enabled  | Suporte a dump de memória após crash; usado também pelo kexec.        |
+| CONFIG_RELOCATABLE                | ✅ Enabled  | Permite kernel rodar em endereços diferentes (essencial p/ kexec).    |
+| CONFIG_RANDOMIZE_BASE             | ✅ Enabled  | KASLR (randomização do kernel na RAM).                                |
+| CONFIG_ARM64_CRASH_DUMP           | ✅ Enabled  | Crash dump específico para arquitetura ARM64.                         |
+| CONFIG_PHYS_ADDR_T_64BIT          | ✅ Enabled  | Endereçamento físico 64-bit (necessário ARM64 moderno).               |
+| CONFIG_ATAGS                      | ✅ Enabled  | Compatibilidade antiga de boot params (pode ajudar em kexec Android). |
+| CONFIG_SECURITY                   | ❌ Disabled | Desativa framework geral de segurança (LSM).                          |
+| CONFIG_SECURITY_SELINUX           | ❌ Disabled | Remove SELinux do kernel.                                             |
+| CONFIG_SECURITY_SELINUX_BOOTPARAM | ❌ Disabled | Remove controle SELinux via boot params.                              |
+| CONFIG_DM_VERITY                  | ❌ Disabled | Desativa dm-verity (integridade de partições Android).                |
+| CONFIG_DM_ANDROID_VERITY          | ❌ Disabled | Implementação Android específica do dm-verity.                        |
+| CONFIG_FS_VERITY                  | ❌ Disabled | Verificação criptográfica em nível filesystem.                        |
+| CONFIG_SECURITYFS                 | ❌ Disabled | Filesystem usado por módulos de segurança.                            |
+| CONFIG_BLK_DEV_INITRD             | ✅ Enabled  | Permite uso de initramfs/ramdisk (boot.img Android).                  |
+| CONFIG_RD_GZIP                    | ✅ Enabled  | Suporte a ramdisk gzip.                                               |
+| CONFIG_RD_LZ4                     | ✅ Enabled  | Suporte a ramdisk LZ4 (muito comum Android).                          |
+| CONFIG_RD_XZ                      | ✅ Enabled  | Suporte a ramdisk XZ.                                                 |
+| CONFIG_DEVTMPFS                   | ✅ Enabled  | Criação automática de `/dev` pelo kernel.                             |
+| CONFIG_DEVTMPFS_MOUNT             | ✅ Enabled  | Monta `/dev` automaticamente no boot.                                 |
+| CONFIG_EXT4_FS                    | ✅ Enabled  | Filesystem EXT4 (system/vendor Android).                              |
+| CONFIG_F2FS_FS                    | ✅ Enabled  | Filesystem otimizado para flash (comum Android).                      |
+| CONFIG_VFAT_FS                    | ✅ Enabled  | FAT/VFAT para partições misc/boot/media.                              |
+| CONFIG_TMPFS                      | ✅ Enabled  | Filesystem temporário em RAM (usado pelo init Android).               |
+| CONFIG_OVERLAY_FS                 | ✅ Enabled  | Overlay filesystem (mods, root, multiROM etc.).                       |
+| CONFIG_PRINTK                     | ✅ Enabled  | Logs kernel (`dmesg`).                                                |
+| CONFIG_EARLY_PRINTK               | ✅ Enabled  | Logs early boot (debug bootloop).                                     |
+| CONFIG_DEBUG_KERNEL               | ✅ Enabled  | Opções gerais de debug kernel.                                        |
+| CONFIG_DEBUG_INFO                 | ✅ Enabled  | Símbolos debug para análise.                                          |
+| CONFIG_MAGIC_SYSRQ                | ✅ Enabled  | SysRq (comandos debug emergenciais).                                  |
+| CONFIG_SYSVIPC                    | ✅ Enabled  | IPC System V (usado por libs Android).                                |
+| CONFIG_POSIX_MQUEUE               | ✅ Enabled  | Filas POSIX IPC (dependência Android userspace).                      |
+| CONFIG_CGROUPS                    | ✅ Enabled  | Control groups (Android usa para gerenciamento processos).            |
+| CONFIG_NAMESPACES                 | ✅ Enabled  | Namespaces estilo container Linux.                                    |
+| CONFIG_MEMCG                      | ✅ Enabled  | Controle de memória por cgroup.                                       |
+| CONFIG_BLK_DEV_LOOP               | ✅ Enabled  | Loop devices (montar imagens ROM).                                    |
+| CONFIG_DM_MAPPER                  | ✅ Enabled  | Device mapper (base criptografia/storage virtual).                    |
+| CONFIG_DM_CRYPT                   | ✅ Enabled  | Criptografia de storage Android.                                      |
+| CONFIG_BINFMT_MISC                | ✅ Enabled  | Executar binários via handlers especiais.                             |
+| CONFIG_MTK_SEC_VIDEO_PATH_SUPPORT | ❌ Disabled | Remove restrições TrustZone vídeo MediaTek.                           |
+| CONFIG_MTK_IN_HOUSE_TEE_SUPPORT   | ❌ Disabled | Desativa hooks TEE proprietários MediaTek.                            |
+
+
+```bash
 # Resolver dependencias automaticamente
 make olddefconfig
 ```
