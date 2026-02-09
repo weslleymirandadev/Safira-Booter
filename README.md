@@ -141,7 +141,7 @@ make olddefconfig
 
 E então builde o projeto para gerar o Image.gz em arch/arm64/boot/
 ```bash
-make ARCH=arm64 SUBARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-android- LLVM=1 Image.gz -j$(nproc)
+make ARCH=arm64 SUBARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 Image.gz -j$(nproc)
 ```
 
 > ATENÇÃO: Pode acontecer de você precisar resolver erros de build manualmente dependendo da versão do kernel baixado, pois podem conter falta de drivers ou funções indefinidas ao compilar. Para corrigir, o jeito mais fácil e rápido é usar IA pra te ajudar. Copie e cole os erros e siga os passos dados pela IA até gerar o arquivo `Image.gz`.
