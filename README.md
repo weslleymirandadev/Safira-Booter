@@ -6,28 +6,8 @@ Para buildar o projeto é ideal que voce tenha o kernel do seu aparelho compatí
 
 ## Kernel
 Primeiro de tudo voce precisa da source do kernel do seu aparelho. Você pode procurar no [XDA Forums](https://xdaforums.com/), no Github ou pedir diretamente o kernel do seu aparelho para sua fabricante. Neste tutorial vou usar o kernel do meu aparelho ([Motorola Moto G22 Hawaiip](https://github.com/ilpianista/android_kernel_motorola_hawaiip/)).
- 
-
-Baixe ou clone o kernel e descubra qual versão da toolchain do LLVM é necessária para o build:
-
-```bash
-# Rode o seguinte comando dentro do kernel
-grep -Ri clang .
-#./build.config.mtk.aarch64:CLANG_TRIPLE=aarch64-linux-gnu-
-#./build.config.mtk.aarch64:CC=clang
-#./build.config.mtk.aarch64:LD_LIBRARY_PATH=prebuilts/clang/host/linux-x86/clang-r383902/lib64:$$LD_LIBRARY_PATH
-#./build.config.mtk.aarch64:CLANG_PREBUILT_BIN=prebuilts/clang/host/linux-x86/clang-r383902/bin
-```
-
-Neste meu caso, a versão do clang é `clang-r383902`, então apenas procurei por `clang-r383902 AOSP download` e baixei o ultimo commit do repositório do android:
-
-```bash
-git clone https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/ --depth 1
-```
-
-Após isso coloque a pasta `bin/` da versão correta do clang do repositório baixado no `PATH`.
-
-Baixe também a toolchain 4.9 para `aarch64` [neste repo](https://github.com/KudProject/aarch64-linux-android-4.9/) e adicione a pasta `bin/` ao `PATH` também.
+  
+Baixe também a toolchain para [aarch64-android](https://github.com/Adrilaw/aarch64-linux-android-4.9-toolchain) e coloque seu `bin` no `PATH`.
 
 O próximo passo é voltar ao diretório do kernel e configurar o build:
 
@@ -35,7 +15,7 @@ O próximo passo é voltar ao diretório do kernel e configurar o build:
 # Gere o arquivo .config
 make ARCH=arm64 k6877v1_64_defconfig
 ```
-> ATENÇÃO: Eu usei a config `k6877v1_64_defconfig` pois ELA é compatível com o MEU chip Mediatek. Pesquise sobre qual é compativel com o seu e mude o nome para configurar.
+> ATENÇÃO: Eu usei a config `k6877v1_64_defconfig` pois ELA é compatível com o MEU chip Mediatek. Pesquise sobre qual é compativel com o seu e mude o nome para configurar. NÃO use `make defconfig` pois ela vai usar a arquitetura do seu sistema pra buildar (`x86_64`) e precisa ser `aarch64` para dispositivos arm64. Então veja bem qual o seu.
 
 Configurar o build:
 ```bash
@@ -141,7 +121,7 @@ make olddefconfig
 
 E então builde o projeto para gerar o Image.gz em arch/arm64/boot/
 ```bash
-make ARCH=arm64 SUBARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- LLVM=1 Image.gz -j$(nproc)
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-android- Image.gz -j$(nproc)
 ```
 
 > ATENÇÃO: Pode acontecer de você precisar resolver erros de build manualmente dependendo da versão do kernel baixado, pois podem conter falta de drivers ou funções indefinidas ao compilar. Para corrigir, o jeito mais fácil e rápido é usar IA pra te ajudar. Copie e cole os erros e siga os passos dados pela IA até gerar o arquivo `Image.gz`.
